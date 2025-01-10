@@ -13,7 +13,6 @@ __pycache__/
 
 # Archivos de logs
 *.log
-*.txt
 
 # Archivos temporales del sistema operativo
 .DS_Store
