@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<h1>Usuarios</h1>
+<form method="POST" class="mb-4">
+    <div class="mb-3">
+        <label for="nombre_usuario" class="form-label">Nombre del Usuario</label>
+        <input type="text" name="nombre" id="nombre_usuario" class="form-control" required>
+    </div>
+    <div class="mb-3">
+        <label for="sector_id" class="form-label">Sector</label>
+        <select name="sector_id" id="sector_id" class="form-select" required>
+            {% for sector in sectores %}
+            <option value="{{ sector.id }}">{{ sector.nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Agregar Usuario</button>
+</form>
+
+<h2>Lista de Usuarios</h2>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Sector</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for usuario in usuarios %}
+        <tr>
+            <td>{{ usuario.id }}</td>
+            <td>{{ usuario.nombre }}</td>
+            <td>{{ usuario.sector.nombre }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

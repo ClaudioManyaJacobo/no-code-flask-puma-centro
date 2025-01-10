@@ -1,0 +1,43 @@
+# Carpetas de entorno virtual
+venv/
+ENV/
+
+# Caché de Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Archivos de configuración del entorno
+*.env
+.env
+
+# Archivos de logs
+*.log
+*.txt
+
+# Archivos temporales del sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos de bases de datos locales
+*.sqlite3
+*.db
+
+# Archivos de migraciones
+migrations/
+
+# Archivos de desarrollo y dependencias
+*.bak
+.idea/
+.vscode/
+*.swp
+
+# Archivos de paquetes o distribuciones
+*.egg
+*.egg-info
+dist/
+build/
+
+# Archivos específicos de PDF generados
+*.pdf
