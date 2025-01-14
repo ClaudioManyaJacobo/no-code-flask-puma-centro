@@ -3,66 +3,250 @@
 {% block title %}Gestión de Facturas{% endblock %}
 
 {% block content %}
-<h1>Facturas</h1>
-<form method="POST" class="mb-4">
-    <div class="mb-3">
-        <label for="usuario_id" class="form-label">Usuario</label>
-        <select name="usuario_id" id="usuario_id" class="form-select" required>
-            {% for usuario in usuarios %}
-            <option value="{{ usuario.id }}">{{ usuario.nombre }}</option>
-            {% endfor %}
-        </select>
+<div class="container py-4" style="background-color: #212529; min-height: 100vh;">
+    <div class="header-facturas">
+        <h1 class="text-light">Gestión de Facturas</h1>
+        <div class="btn-group">
+            <!-- Botón para generar los PDF del mes -->
+            <button type="button" class="btn boton-generate" data-url="{{ url_for('factura_bp.generar_pdf_facturas') }}" onclick="generarRecibos(this)">
+                <i class="bi bi-file-earmark-pdf"></i> Generar Recibos del Mes
+            </button>
+    
+            <!-- Botón para eliminar todos los registros -->
+            <button type="button" class="btn boton-delete" data-bs-toggle="modal" data-bs-target="#confirmacionModal">
+                <i class="bi bi-trash"></i> Eliminar Todos los Datos
+            </button>
+        </div>
     </div>
-    <div class="mb-3">
-        <label for="mes_facturacion" class="form-label">Mes de Facturación</label>
-        <input type="text" name="mes_facturacion" id="mes_facturacion" class="form-control" required>
+    
+    <!-- Modal para mostrar el mensaje de Generar Recibos -->
+    <div class="modal fade" id="recibosModal" tabindex="-1" aria-labelledby="recibosModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="recibosModalLabel">Recibos Generados</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center" style="color: #0b0b0b !important;">
+                    <p id="mensajeModal" class="fw-bold"></p>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="mb-3">
-        <label for="fecha_vencimiento" class="form-label">Fecha de Vencimiento</label>
-        <input type="date" name="fecha_vencimiento" id="fecha_vencimiento" class="form-control" required>
+    <div>
+    <!-- Modal para mostrar el mensaje de Eliminar todos las Facturas -->
+    <div class="modal fade" id="confirmacionModal" tabindex="-1" aria-labelledby="confirmacionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="confirmacionModalLabel">¿Está seguro de eliminar todos los datos?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center" style="color: #0b0b0b !important;" >
+                    <p class="text-danger fw-bold">Esta acción no se puede deshacer.</p>
+                    <p>Por favor, escriba <strong>"CONFIRMAR"</strong> en el campo a continuación para continuar.</p>
+                    <form id="formEliminar" action="{{ url_for('factura_bp.eliminar_todos') }}" method="POST">
+                        <input type="text" id="confirmacion" name="confirmacion" class="form-control text-center mb-3" placeholder="CONFIRMAR" required>
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="bi bi-trash-fill"></i> Confirmar Eliminación
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="mb-3">
-        <label for="fecha_corte" class="form-label">Fecha de Corte</label>
-        <input type="date" name="fecha_corte" id="fecha_corte" class="form-control" required>
-    </div>
-    <div class="mb-3">
-        <label for="lectura_actual" class="form-label">Lectura Actual</label>
-        <input type="number" step="0.01" name="lectura_actual" id="lectura_actual" class="form-control" required>
-    </div>
-    <div class="mb-3">
-        <label for="lectura_anterior" class="form-label">Lectura Anterior</label>
-        <input type="number" step="0.01" name="lectura_anterior" id="lectura_anterior" class="form-control" required>
-    </div>
-    <div class="mb-3">
-        <label for="deudas_anteriores" class="form-label">Deudas Anteriores</label>
-        <input type="number" step="0.01" name="deudas_anteriores" id="deudas_anteriores" class="form-control" required>
-    </div>
-    <button type="submit" class="btn btn-primary">Agregar Factura</button>
-</form>
 
-<h2>Lista de Facturas</h2>
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Usuario</th>
-            <th>Mes</th>
-            <th>Consumo (kWh)</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for factura in facturas %}
-        <tr>
-            <td>{{ factura.id }}</td>
-            <td>{{ factura.usuario.nombre }}</td>
-            <td>{{ factura.mes_facturacion }}</td>
-            <td>{{ factura.consumo_kwh }}</td>
-            <td>
-                <a href="{{ url_for('factura_bp.generar_pdf', factura_id=factura.id) }}" class="btn btn-secondary" target="_blank">Generar PDF</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div 
+                class="alert alert-dismissible fade show shadow {% if category == 'success' %}border-success{% elif category == 'danger' %}border-danger{% endif %}" 
+                role="alert" 
+                style="animation: slideIn 0.5s;">
+                <strong>
+                    {% if category == 'success' %}¡Éxito!{% elif category == 'danger' %}¡Error!{% endif %}
+                </strong> {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+    
+
+    <!-- Formulario para agregar facturas -->
+    <div class="card mb-5 shadow-lg rounded-form bg-secondary text-light">
+        <div class="card-header bg-dark text-white">
+            <h2 class="h5">Agregar Nueva Factura</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" class="needs-validation" novalidate>
+                <div class="mb-3">
+                    <label for="usuario_id" class="form-label">Usuario</label>
+                    <select name="usuario_id" id="usuario_id" class="form-select bg-dark text-light border-0" required>
+                        <option value="" selected disabled>Selecciona un usuario</option>
+                        {% for usuario in usuarios %}
+                        <option value="{{ usuario.id }}">{{ usuario.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="invalid-feedback" style="color: #f4d03f;">Por favor, selecciona un usuario.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="mes_facturacion" class="form-label">Mes de Facturación</label>
+                    <select name="mes_facturacion" id="mes_facturacion" class="form-select bg-dark text-light border-0" required readonly>
+                        <!-- Mostrar solo el mes actual -->
+                        <option value="{{ mes_actual }}" selected>{{ mes_actual }}</option>
+                    </select>
+                    <div class="invalid-feedback" style="color: #f4d03f;">Por favor, selecciona un mes de facturación.</div>
+                </div>
+                
+
+                <div class="mb-3">
+                    <label for="fecha_vencimiento" class="form-label">Fecha de Vencimiento</label>
+                    <input type="date" name="fecha_vencimiento" id="fecha_vencimiento" class="form-control bg-dark text-light border-0" required>
+                    <div class="invalid-feedback" style="color: #f4d03f;">Por favor, selecciona la fecha de vencimiento.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="fecha_corte" class="form-label">Fecha de Corte</label>
+                    <input type="date" name="fecha_corte" id="fecha_corte" class="form-control bg-dark text-light border-0" required>
+                    <div class="invalid-feedback" style="color: #f4d03f;">Por favor, selecciona la fecha de corte.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="lectura_actual" class="form-label">Lectura Actual (kWh)</label>
+                    <input type="number" step="0.01" name="lectura_actual" id="lectura_actual" class="form-control bg-dark text-light border-0" required>
+                    <div class="invalid-feedback" style="color: #f4d03f;">Por favor, ingresa la lectura actual.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="lectura_anterior" class="form-label">Lectura Anterior (kWh)</label>
+                    <input type="number" step="0.01" name="lectura_anterior" id="lectura_anterior" class="form-control bg-dark text-light border-0" required>
+                    <div class="invalid-feedback" style="color: #f4d03f;">Por favor, ingresa la lectura anterior.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="deudas_anteriores" class="form-label">Deudas Anteriores (S/.)</label>
+                    <input type="number" step="0.01" name="deudas_anteriores" id="deudas_anteriores" class="form-control bg-dark text-light border-0" required>
+                    <div class="invalid-feedback" style="color: #f4d03f;">Por favor, ingresa el monto de las deudas anteriores.</div>
+                </div>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-file-earmark-plus"></i> Agregar Factura
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de Facturas -->
+    <h2 class="text-light mb-3">Lista de Facturas</h2>
+    <div class="table-responsive">
+        <table class="table table-dark table-striped table-hover align-middle">
+            <thead class="bg-dark text-white">
+                <tr>
+                    <th>ID</th>
+                    <th>Usuario</th>
+                    <th>Mes</th>
+                    <th>Consumo (kWh)</th>
+                    <th>Recibo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for factura in facturas %}
+                <tr>
+                    <td>{{ factura.id }}</td>
+                    <td>{{ factura.usuario.nombre }}</td>
+                    <td>{{ factura.mes_facturacion }}</td>
+                    <td>{{ factura.consumo_kwh }}</td>
+                    <td>
+                        {% if factura.detalles and factura.detalles[0].recibo_img %}
+                        <a href="{{ url_for('factura_bp.mostrar_recibo', factura_id=factura.id) }}" class="btn btn-info btn-sm" target="_blank">
+                            Ver Recibo
+                        </a>
+                        {% else %}
+                        <span class="text-muted">Sin Recibo</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted" style="color: #fbe9e7 !important;">No hay facturas registradas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    .alert {
+        border-left: 5px solid transparent;
+        border-radius: 8px;
+        font-family: 'Arial', sans-serif;
+        font-size: 1rem;
+    }
+    
+    .alert-success, .border-success {
+        border-left-color: #4caf50;
+        background-color: #e8f5e9;
+        color: #4caf50;
+    }
+    
+    .alert-danger, .border-danger {
+        border-left-color: #f44336;
+        background-color: #fbe9e7;
+        color: #f44336;
+    }
+    .boton-generate {
+        background-color: #38a69d;
+        color: #ffffff;
+        font-weight: bold;
+        border: none;
+        transition: transform 0.2s ease, background-color 0.3s ease;
+        border-radius: 10px;
+    }
+
+    .boton-generate:hover {
+        background-color: #2e8c79;
+        transform: translateY(-2px);
+    }
+
+    .boton-delete {
+        background-color: #e53935;
+        color: #ffffff;
+        font-weight: bold;
+        border: none;
+        padding: 10px 15px;
+        transition: transform 0.2s ease, background-color 0.3s ease;
+        border-radius: 10px;
+    }
+
+    .boton-delete:hover {
+        background-color: #c62828;
+        transform: translateY(-2px);
+    }
+    .header-facturas {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;         
+        margin-bottom: 20px;
+    }
+
+    .header-facturas .btn-group {
+        display: flex;
+    }
+</style>
+    
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
 {% endblock %}
+
